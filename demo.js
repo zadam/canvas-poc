@@ -21,15 +21,6 @@ jsPlumb.ready(function () {
 
     const canvas = document.getElementById("canvas");
 
-    instance.bind("click", function (c) {
-        const type = prompt("Specify new connection type:");
-
-        c.getOverlay("label").setLabel(type);
-
-        const relation = data.relations.find(relation => relation.connectionId === c.id);
-        relation.type = type;
-    });
-
     let data;
     let initDone = false;
 
@@ -183,7 +174,7 @@ jsPlumb.ready(function () {
     $canvas.contextmenu({
         delegate: ".note-box",
         menu: [
-            {title: "Remove", cmd: "remove", uiIcon: "ui-icon-trash"},
+            {title: "Remove note", cmd: "remove", uiIcon: "ui-icon-trash"},
             {title: "Edit title", cmd: "edit-title", uiIcon: "ui-icon-pencil"},
         ],
         select: function(event, ui) {
@@ -191,6 +182,10 @@ jsPlumb.ready(function () {
             const noteId = $noteBox.prop("id");
 
             if (ui.cmd === "remove") {
+                if (!confirm("Are you sure you want to remove the note?")) {
+                    return;
+                }
+
                 instance.remove(noteId);
 
                 data.notes = data.notes.filter(note => note.id !== noteId);
@@ -215,7 +210,47 @@ jsPlumb.ready(function () {
         }
     });
 
-    // suspend drawing and initialise.
+    $.widget("moogle.contextmenuRelation", $.moogle.contextmenu, {});
+
+    $canvas.contextmenuRelation({
+        delegate: ".aLabel,.jtk-connector",
+        autoTrigger: false, // it doesn't open automatically, needs to be triggered explicitly by .open() call
+        menu: [
+            {title: "Remove relation", cmd: "remove", uiIcon: "ui-icon-trash"},
+            {title: "Edit relation name", cmd: "edit-name", uiIcon: "ui-icon-pencil"},
+        ],
+        select: function(event, ui) {
+            const {connection} = ui.extraData;
+
+            if (ui.cmd === 'remove') {
+                if (!confirm("Are you sure you want to remove the relation?")) {
+                    return;
+                }
+
+                instance.deleteConnection(connection);
+
+                data.relations = data.relations.filter(relation => relation.connectionId !== connection.id);
+                saveData();
+            }
+            else if (ui.cmd === 'edit-name') {
+                const relationName = prompt("Specify new relation name:");
+
+                connection.getOverlay("label").setLabel(relationName);
+
+                const relation = data.relations.find(relation => relation.connectionId === connection.id);
+                relation.type = relationName;
+
+                saveData();
+            }
+        }
+    });
+
+    instance.bind("contextmenu", function (c, e) {
+        e.preventDefault();
+
+        $canvas.contextmenuRelation("open", e, { connection: c });
+    });
+
     instance.batch(function () {
         const maxY = notes.filter(note => !!note.y).map(note => note.y).reduce((a, b) => Math.max(a, b));
         let curX = 100;
@@ -247,6 +282,7 @@ jsPlumb.ready(function () {
             relation.connectionId = connection.id;
 
             connection.getOverlay("label").setLabel(relation.type);
+            connection.canvas.setAttribute("data-connection-id", connection.id);
         }
 
         initDone = true;
