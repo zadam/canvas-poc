@@ -178,14 +178,17 @@ jsPlumb.ready(function () {
         saveData();
     }
 
-    $("#canvas").contextmenu({
+    let $canvas = $("#canvas");
+
+    $canvas.contextmenu({
         delegate: ".note-box",
         menu: [
             {title: "Remove", cmd: "remove", uiIcon: "ui-icon-trash"},
             {title: "Edit title", cmd: "edit-title", uiIcon: "ui-icon-pencil"},
         ],
         select: function(event, ui) {
-            const noteId = ui.target.prop("id");
+            const $noteBox = ui.target.closest(".note-box");
+            const noteId = $noteBox.prop("id");
 
             if (ui.cmd === "remove") {
                 instance.remove(noteId);
@@ -196,11 +199,16 @@ jsPlumb.ready(function () {
                 saveData();
             }
             else if (ui.cmd === "edit-title") {
+                const title = prompt("Enter new note title:");
+
+                if (!title) {
+                    return;
+                }
+
                 const note = data.notes.find(note => note.id === noteId);
+                note.title = title;
 
-                note.title = prompt("Enter new note title:");
-
-                ui.target.find(".title").text(note.title);
+                $noteBox.find(".title").text(note.title);
 
                 saveData();
             }
