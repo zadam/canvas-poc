@@ -288,5 +288,10 @@ jsPlumb.ready(function () {
         initDone = true;
     });
 
+    // so that canvas is not panned when clicking/dragging note box
+    $canvas.on('mousedown touchstart', '.note-box, .aLabel', e => e.stopPropagation());
+
     jsPlumb.fire("jsPlumbDemoLoaded", instance);
+
+    panzoom(canvas);
 });
