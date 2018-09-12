@@ -71,3 +71,7 @@ path, .jtk-endpoint { cursor:pointer; }
     cursor: move;
     border-radius: 8px;
 }
+
+.ui-contextmenu {
+    z-index: 100;
+}

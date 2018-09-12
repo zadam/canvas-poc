@@ -130,7 +130,7 @@ jsPlumb.ready(function () {
             .addClass("note-box")
             .prop("id", id)
             .append($("<div>").addClass("handle"))
-            .append($("<span>").text(title))
+            .append($("<span>").addClass("title").text(title))
             .append($("<div>").addClass("endpoint"))
             .css("left", x + "px")
             .css("top", y + "px")
@@ -177,6 +177,35 @@ jsPlumb.ready(function () {
 
         saveData();
     }
+
+    $("#canvas").contextmenu({
+        delegate: ".note-box",
+        menu: [
+            {title: "Remove", cmd: "remove", uiIcon: "ui-icon-trash"},
+            {title: "Edit title", cmd: "edit-title", uiIcon: "ui-icon-pencil"},
+        ],
+        select: function(event, ui) {
+            const noteId = ui.target.prop("id");
+
+            if (ui.cmd === "remove") {
+                instance.remove(noteId);
+
+                data.notes = data.notes.filter(note => note.id !== noteId);
+                data.relations = data.relations.filter(relation => relation.source !== noteId && relation.target !== noteId);
+
+                saveData();
+            }
+            else if (ui.cmd === "edit-title") {
+                const note = data.notes.find(note => note.id === noteId);
+
+                note.title = prompt("Enter new note title:");
+
+                ui.target.find(".title").text(note.title);
+
+                saveData();
+            }
+        }
+    });
 
     // suspend drawing and initialise.
     instance.batch(function () {
